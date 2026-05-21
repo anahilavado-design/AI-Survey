@@ -1248,12 +1248,12 @@ function buildPayload() {
   function getChkRaw(name) {
     var cbs = document.querySelectorAll('input[name="' + name + '"]:checked');
     var vals = [];
-    cbs.forEach(function(cb) { vals.push(cb.value); });
+    cbs.forEach(function(cb) { vals.push(cb.closest('label').textContent.trim()); });
     return vals.join(', ');
   }
   function getRadRaw(name) {
     var el = document.querySelector('input[name="' + name + '"]:checked');
-    return el ? el.value : '';
+    return el ? el.closest('label').textContent.trim() : '';
   }
   return {
     email:     userData.email,
