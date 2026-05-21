@@ -1,0 +1,1440 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Krealo AI — Diagnóstico</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ── Tokens ──────────────────────────────── */
+:root {
+  --kai-navy:      #0B4C6F;
+  --kai-blue-dark: #065C86;
+  --kai-blue:      #0188C8;
+  --kai-lime:      #BEF264;
+  --kai-text:      #1c2733;
+  --kai-muted:     #6b7280;
+  --kai-border:    #d0dae8;
+}
+
+/* ── Reset ───────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #fff;
+  color: var(--kai-text);
+  line-height: 1.6;
+  min-height: 100vh;
+  padding-top: 4px;
+}
+
+/* ── Franja Lima — siempre visible ─────── */
+.kai-franja {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: var(--kai-lime);
+  z-index: 1000;
+}
+
+/* ── Screens ─────────────────────────────── */
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* ── Wordmark bicolor (sobre oscuro) ──────
+   Uso: <span class="wm-k">Krealo</span><span class="wm-ai"> AI</span>
+   Sobre claro: todo en Brand/800, sin clases especiales               */
+.wm-k  { color: #fff; }
+.wm-ai { color: var(--kai-lime); }
+
+/* ══════════════════════════════════════════
+   SCREEN 0 — Cover oscuro
+══════════════════════════════════════════ */
+#screen-0.active {
+  display: flex;
+  flex-direction: column;
+  background: var(--kai-navy);
+  min-height: 100vh;
+}
+.s0-wrap {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 48px 24px 64px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Header del cover */
+.s0-header {
+  text-align: center;
+  margin-bottom: 36px;
+  width: 100%;
+}
+.s0-wordmark {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  margin-bottom: 20px;
+}
+.s0-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 14px;
+  line-height: 1.35;
+}
+.s0-subtitle {
+  font-size: 14px;
+  color: rgba(255,255,255,0.65);
+  line-height: 1.75;
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+/* Card del cover */
+.s0-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.25);
+  width: 100%;
+}
+
+/* Campos Screen 0 */
+.field-group { margin-bottom: 20px; }
+
+.field-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--kai-blue);
+  margin-bottom: 6px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+/* Email split */
+.email-split {
+  display: flex;
+  align-items: center;
+  border: 1.5px solid var(--kai-border);
+  border-radius: 6px;
+  background: #fff;
+  overflow: hidden;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.email-split:focus-within {
+  border-color: var(--kai-blue);
+  box-shadow: 0 0 0 3px rgba(1,136,200,0.12);
+}
+.email-split input {
+  flex: 1;
+  border: none;
+  border-right: 1.5px solid var(--kai-border);
+  padding: 11px 10px 11px 14px;
+  font-size: 14.5px;
+  font-family: inherit;
+  color: var(--kai-text);
+  outline: none;
+  background: transparent;
+  min-width: 0;
+}
+.email-split input::placeholder { color: #b0b8c8; }
+.email-domain {
+  padding: 11px 14px 11px 10px;
+  font-size: 14px;
+  color: var(--kai-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.field-select {
+  width: 100%;
+  padding: 11px 40px 11px 14px;
+  border: 1.5px solid var(--kai-border);
+  border-radius: 6px;
+  font-size: 14.5px;
+  font-family: inherit;
+  color: var(--kai-text);
+  background: #fff;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.field-select:focus {
+  border-color: var(--kai-blue);
+  box-shadow: 0 0 0 3px rgba(1,136,200,0.12);
+}
+.select-wrap { position: relative; }
+.select-wrap::after {
+  content: '▾';
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--kai-muted);
+  pointer-events: none;
+  font-size: 13px;
+}
+
+.field-error {
+  font-size: 12px;
+  color: #b91c1c;
+  margin-top: 5px;
+  display: none;
+}
+.field-error.visible { display: block; }
+
+/* Disclaimer */
+.s0-disclaimer {
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.65;
+  background: #f8fafc;
+  border-radius: 6px;
+  padding: 12px 14px;
+  margin-bottom: 20px;
+  border: 1px solid #e8edf4;
+}
+
+/* Botón primario */
+.btn-primary {
+  display: block;
+  width: 100%;
+  padding: 13px 20px;
+  background: var(--kai-blue-dark);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+  letter-spacing: 0.2px;
+}
+.btn-primary:hover:not(:disabled) { background: var(--kai-navy); }
+.btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* ══════════════════════════════════════════
+   SCREEN 1 — Formulario
+══════════════════════════════════════════ */
+.form-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 28px;
+}
+.form-program-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--kai-blue-dark);
+  letter-spacing: 0.3px;
+}
+
+.container {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+}
+
+/* Encuadre — callout box estilo brand */
+.encuadre {
+  border-left: 4px solid var(--kai-lime);
+  background: #f0f7ff;
+  border-radius: 0 8px 8px 0;
+  padding: 18px 22px;
+  margin-bottom: 6px;
+  font-size: 13.5px;
+  color: var(--kai-navy);
+  line-height: 1.75;
+  font-style: normal;
+  font-weight: 400;
+}
+
+/* Banner de error — sticky en top del viewport cuando visible */
+.submit-error-banner {
+  display: none;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-radius: 7px;
+  padding: 12px 16px;
+  font-size: 13px;
+  color: #b91c1c;
+  font-weight: 500;
+  text-align: center;
+  margin-bottom: 20px;
+}
+.submit-error-banner.visible {
+  display: block;
+  position: sticky;
+  top: 8px;
+  z-index: 500;
+  box-shadow: 0 2px 12px rgba(185,28,28,0.15);
+}
+
+.form-meta {
+  font-size: 11px;
+  color: var(--kai-muted);
+  margin-bottom: 36px;
+  padding-left: 4px;
+  letter-spacing: 0.2px;
+}
+
+/* Separadores de dimensión */
+.dim-header {
+  margin: 44px 0 18px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--kai-blue-dark);
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.dim-num {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--kai-blue);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.dim-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--kai-blue-dark);
+}
+
+/* Bloques de preguntas */
+.question-block {
+  background: #fff;
+  border-radius: 8px;
+  padding: 24px 26px 20px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 0 0 1px rgba(0,0,0,0.04);
+}
+.question-num {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--kai-blue);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.question-text {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--kai-text);
+  margin-bottom: 18px;
+  line-height: 1.55;
+}
+
+/* Opciones */
+.options-list { list-style: none; }
+.option-item { margin-bottom: 3px; }
+
+.option-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  padding: 9px 11px;
+  border-radius: 6px;
+  border: 1.5px solid transparent;
+  font-size: 13.5px;
+  color: #2d3748;
+  line-height: 1.5;
+  user-select: none;
+  transition: background 0.1s;
+}
+.option-label:hover { background: #eef4fb; }
+
+.option-label input[type="radio"],
+.option-label input[type="checkbox"] {
+  margin-top: 2px;
+  flex-shrink: 0;
+  accent-color: var(--kai-blue-dark);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+/* Texto inline (P1 "Otra", P2 "Otra", P13 "Otro") */
+.inline-text-wrap {
+  display: none;
+  margin: 3px 0 5px 36px;
+}
+.inline-text-wrap.visible { display: block; }
+.inline-text-wrap input[type="text"] {
+  width: 100%;
+  padding: 7px 11px;
+  border: 1.5px solid #c8d4e8;
+  border-radius: 5px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--kai-text);
+  background: #f8faff;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.inline-text-wrap input[type="text"]:focus {
+  border-color: var(--kai-blue);
+  background: #fff;
+}
+
+/* Textarea condicional (P11, P12) */
+.cond-text-block {
+  display: none;
+  margin-top: 10px;
+  padding: 14px;
+  background: #f6f9ff;
+  border-radius: 6px;
+  border: 1.5px solid #c5d4f0;
+}
+.cond-text-block.visible { display: block; }
+.cond-text-block textarea {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1.5px solid #c5d4f0;
+  border-radius: 5px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--kai-text);
+  resize: vertical;
+  outline: none;
+  min-height: 88px;
+  background: #fff;
+  transition: border-color 0.15s;
+  line-height: 1.6;
+}
+.cond-text-block textarea:focus { border-color: var(--kai-blue); }
+
+/* Badge solo líderes */
+.leader-badge {
+  display: inline-block;
+  background: var(--kai-blue-dark);
+  color: #fff;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 2px 9px;
+  border-radius: 20px;
+  margin-bottom: 14px;
+}
+
+/* Errores inline */
+.q-error {
+  font-size: 12px;
+  color: #b91c1c;
+  margin-top: 8px;
+  display: none;
+  padding: 7px 11px;
+  background: #fef2f2;
+  border-radius: 4px;
+  border-left: 3px solid #b91c1c;
+}
+.q-error.visible { display: block; }
+
+/* Botón submit */
+.submit-area {
+  margin-top: 40px;
+  text-align: center;
+}
+.btn-submit {
+  padding: 14px 52px;
+  background: var(--kai-blue-dark);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 15.5px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+  letter-spacing: 0.3px;
+}
+.btn-submit:hover { background: var(--kai-navy); }
+
+/* ══════════════════════════════════════════
+   SCREEN 2 — Loading
+══════════════════════════════════════════ */
+#screen-2.active {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+.loading-wrap {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 48px 24px;
+  text-align: center;
+}
+.loading-pause {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--kai-blue-dark);
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+.loading-sub {
+  font-size: 14px;
+  color: var(--kai-muted);
+  margin-bottom: 32px;
+}
+.loading-bar-track {
+  width: 100%;
+  height: 3px;
+  background: #dde6f0;
+  border-radius: 99px;
+  overflow: hidden;
+  margin-bottom: 0;
+}
+.loading-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--kai-blue-dark);
+  border-radius: 99px;
+}
+.loading-bar-fill.go {
+  animation: barFill 5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes barFill {
+  0%   { width: 0%; }
+  70%  { width: 78%; }
+  90%  { width: 92%; }
+  100% { width: 100%; }
+}
+
+/* ══════════════════════════════════════════
+   SCREEN 3 — Resultados
+══════════════════════════════════════════ */
+.results-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+.results-wordmark {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--kai-blue);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.results-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--kai-blue-dark);
+  margin-bottom: 6px;
+}
+.results-note {
+  font-size: 13px;
+  color: var(--kai-muted);
+}
+.output-block {
+  background: #fff;
+  border-radius: 8px;
+  padding: 22px 26px;
+  font-size: 12.5px;
+  line-height: 1.85;
+  color: #2d3748;
+  white-space: pre-wrap;
+  font-family: 'Courier New', Courier, monospace;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 20px;
+  max-height: 520px;
+  overflow-y: auto;
+}
+.output-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.btn-action {
+  padding: 10px 26px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 2px solid var(--kai-blue-dark);
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.btn-copy { background: #fff; color: var(--kai-blue-dark); }
+.btn-copy:hover { background: #eef4fb; }
+.btn-copy.confirmed { background: #15803d; color: #fff; border-color: #15803d; }
+.btn-dl { background: var(--kai-blue-dark); color: #fff; }
+.btn-dl.confirmed { background: #15803d; color: #fff; border-color: #15803d; }
+.btn-dl:hover { background: var(--kai-navy); }
+
+/* ¿Qué sigue? */
+.next-step-block {
+  margin-top: 40px;
+  padding: 24px 28px;
+  background: #f0f7ff;
+  border-left: 4px solid var(--kai-lime);
+  border-radius: 0 8px 8px 0;
+}
+.next-step-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--kai-blue);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.next-step-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--kai-blue-dark);
+  margin-bottom: 8px;
+}
+.next-step-body {
+  font-size: 13.5px;
+  color: var(--kai-navy);
+  line-height: 1.75;
+}
+
+/* Toast de confirmación */
+.action-toast {
+  display: none;
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--kai-navy);
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 500;
+  padding: 12px 22px;
+  border-radius: 8px;
+  z-index: 900;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  white-space: nowrap;
+  transition: opacity 0.3s;
+}
+.action-toast.visible { display: block; }
+</style>
+</head>
+<body>
+
+<!-- Franja Lima — siempre visible -->
+<div class="kai-franja" aria-hidden="true"></div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 0 — Cover oscuro / Datos iniciales
+══════════════════════════════════════════ -->
+<div id="screen-0" class="screen active">
+  <div class="s0-wrap">
+
+    <div class="s0-header">
+      <div class="s0-wordmark">
+        <span class="wm-k">Krealo</span><span class="wm-ai"> AI</span>
+      </div>
+      <h1 class="s0-title">Diagnóstico de adopción</h1>
+      <p class="s0-subtitle">6–8 minutos para mapear cómo trabajas hoy con AI. Lo que descubras aquí te sirve a ti también — y da forma al plan que viene.</p>
+    </div>
+
+    <div class="s0-card">
+
+      <div class="field-group">
+        <label class="field-label" for="f-email-local">Email corporativo</label>
+        <div class="email-split" id="email-split">
+          <input type="text" id="f-email-local" placeholder="tu.nombre" autocomplete="username" spellcheck="false">
+          <span class="email-domain">@krealo.pe</span>
+        </div>
+        <div class="field-error" id="err-email">Escribe tu nombre de usuario antes del @krealo.pe</div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="f-area">Área</label>
+        <div class="select-wrap">
+          <select class="field-select" id="f-area">
+            <option value="">Selecciona tu área</option>
+            <option value="Investment">Investment</option>
+            <option value="Support">Support</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="f-nivel">Nivel</label>
+        <div class="select-wrap">
+          <select class="field-select" id="f-nivel">
+            <option value="">Selecciona tu nivel</option>
+            <option value="lider">Líder (personas a cargo)</option>
+            <option value="ic">Individual Contributor (IC)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="s0-disclaimer">
+        Lo que respondes es tuyo. El análisis se hace a nivel de patrones del equipo — los líderes ven tendencias del grupo, no respuestas individuales.
+      </div>
+
+      <button class="btn-primary" id="btn-comenzar" disabled>Comenzar</button>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 1 — Formulario
+══════════════════════════════════════════ -->
+<div id="screen-1" class="screen">
+  <div class="container">
+
+    <div class="form-header">
+      <span class="form-program-name">Krealo AI — Diagnóstico</span>
+    </div>
+
+    <!-- Banner de error — sticky al top del viewport -->
+    <div class="submit-error-banner" id="submit-error-banner"></div>
+
+    <div class="encuadre">
+      Estamos mapeando cómo trabajamos hoy — incluyendo dónde usamos AI y dónde no. Esta es una medición de punto de partida, no una evaluación. Tus respuestas nos ayudan a entender qué está funcionando y a enfocar los esfuerzos donde más diferencia harán.
+    </div>
+
+    <p class="form-meta" id="form-meta-time"></p>
+
+    <div id="form-body"></div>
+
+    <div class="submit-area">
+      <button class="btn-submit" id="btn-submit">Enviar respuestas</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 2 — Loading
+══════════════════════════════════════════ -->
+<div id="screen-2" class="screen">
+  <div class="loading-wrap">
+    <p class="loading-pause">Enviando tus respuestas...</p>
+    <p class="loading-sub">Procesando tu resumen.</p>
+    <div class="loading-bar-track">
+      <div class="loading-bar-fill" id="loading-bar"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 3 — Resultados
+══════════════════════════════════════════ -->
+<div id="screen-3" class="screen">
+  <div class="container">
+
+    <div class="results-header">
+      <p class="results-wordmark">Krealo AI</p>
+      <h2 class="results-title">Tus respuestas</h2>
+      <p class="results-note">Si quieres guardar tus respuestas, puedes descargar o copiar tu resumen antes de cerrar.</p>
+    </div>
+
+    <div class="output-block" id="output-text"></div>
+
+    <div class="output-actions">
+      <button class="btn-action btn-copy" id="btn-copy">Copiar respuestas</button>
+      <button class="btn-action btn-dl" id="btn-dl">Descargar como .txt</button>
+    </div>
+
+    <div class="next-step-block">
+      <p class="next-step-eyebrow">¿Qué sigue?</p>
+      <p class="next-step-title">Paso 2 — Inventario de Actividades</p>
+      <p class="next-step-body">El survey mapeó cómo usas AI hoy. El siguiente instrumento va más profundo: ¿en qué actividades concretas de tu semana puede entrar AI primero? Lo recibirás pronto.</p>
+    </div>
+
+  </div>
+</div>
+
+<!-- Toast de confirmación -->
+<div class="action-toast" id="action-toast"></div>
+
+<script>
+'use strict';
+
+// ═══════════════════════════════════════════
+//  CONFIGURACIÓN — reemplazar antes del lanzamiento
+// ═══════════════════════════════════════════
+var APPS_SCRIPT_URL = 'PENDIENTE';  // Pega aquí la URL del Web App desplegado
+
+// ═══════════════════════════════════════════
+//  ESTADO
+// ═══════════════════════════════════════════
+var userData = { email: '', area: '', nivel: '' };
+var esLider  = false;
+
+// ═══════════════════════════════════════════
+//  SCREEN 0 — Validación
+// ═══════════════════════════════════════════
+var fLocal   = document.getElementById('f-email-local');
+var fArea    = document.getElementById('f-area');
+var fNivel   = document.getElementById('f-nivel');
+var btnCom   = document.getElementById('btn-comenzar');
+var errEmail = document.getElementById('err-email');
+
+function validateS0() {
+  var local   = fLocal.value.trim();
+  var localOk = local.length > 0 && !/[@\s]/.test(local);
+  var ready   = localOk && fArea.value && fNivel.value;
+  btnCom.disabled = !ready;
+  if (local && !localOk) errEmail.classList.add('visible');
+  else errEmail.classList.remove('visible');
+}
+
+fLocal.addEventListener('input', validateS0);
+fArea.addEventListener('change', validateS0);
+fNivel.addEventListener('change', validateS0);
+
+btnCom.addEventListener('click', function () {
+  userData.email = fLocal.value.trim() + '@krealo.pe';
+  userData.area  = fArea.value;
+  userData.nivel = fNivel.value;
+  esLider = userData.nivel === 'lider';
+  buildForm();
+  showScreen('screen-1');
+  window.scrollTo(0, 0);
+});
+
+// ═══════════════════════════════════════════
+//  SCREEN SWITCHER
+// ═══════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(function (s) {
+    s.classList.remove('active');
+  });
+  document.getElementById(id).classList.add('active');
+}
+
+// ═══════════════════════════════════════════
+//  FORM BUILDER
+// ═══════════════════════════════════════════
+function buildForm() {
+  var meta = document.getElementById('form-meta-time');
+  meta.textContent = esLider
+    ? '15 preguntas · 6–8 minutos'
+    : '13 preguntas · 6–8 minutos';
+
+  var html = '';
+
+  // ─── BLOQUE 1 ──────────────────────────
+  html += dimH('01', 'Uso actual de AI en tu trabajo');
+
+  html += qBlock('P1', 'P1',
+    '¿Qué herramientas de AI usas actualmente en tu trabajo? Selecciona todas las que apliquen.',
+    '<ul class="options-list" id="p1-list">' +
+      chk('p1','chatgpt',     'ChatGPT (OpenAI)') +
+      chk('p1','gemini',      'Gemini (Google)') +
+      chk('p1','claude',      'Claude (Anthropic)') +
+      chk('p1','copilot',     'Copilot (Microsoft)') +
+      chk('p1','gosearch',    'GoSearch') +
+      chk('p1','n8n',         'n8n') +
+      chk('p1','perplexity',  'Perplexity') +
+      chk('p1','granola',     'Granola u otra herramienta de notas/transcripción con AI') +
+      chk('p1','ai-integrada','AI integrada en herramientas que ya uso (ej. Notion AI, Gmail, Slides)') +
+      chkText('p1','otra',    'Otra','p1-otra','Especifica cuál') +
+      chkExcl('p1','ninguna', 'No uso ninguna actualmente') +
+    '</ul>' +
+    '<div class="q-error" id="err-p1">Elige una opción para continuar.</div>'
+  );
+
+  html += qBlock('P2', 'P2',
+    '¿En qué tipos de tareas usas AI actualmente en tu trabajo? Selecciona todas las que apliquen.',
+    '<ul class="options-list" id="p2-list">' +
+      chk('p2','research',      'Research y síntesis de información') +
+      chk('p2','redaccion',     'Redacción y edición de documentos') +
+      chk('p2','analisis',      'Análisis y estructuración de datos') +
+      chk('p2','presentaciones','Preparación de presentaciones o materiales') +
+      chk('p2','resumen',       'Resumen de reuniones o documentos extensos') +
+      chk('p2','ideas',         'Generación de ideas o brainstorming') +
+      chk('p2','feedback',      'Revisión y feedback de textos propios') +
+      chk('p2','traduccion',    'Traducción o adaptación de contenido') +
+      chk('p2','automatizacion','Automatización de tareas repetitivas') +
+      chk('p2','comunicacion',  'Comunicación — emails, mensajes, seguimientos') +
+      chkText('p2','otra',      'Otra','p2-otra','Especifica cuál') +
+      chkExcl('p2','ninguna',   'No uso AI en tareas de trabajo todavía') +
+    '</ul>' +
+    '<div class="q-error" id="err-p2">Elige una opción para continuar.</div>'
+  );
+
+  html += qBlock('P3', 'P3', '¿Con qué frecuencia usas AI en tu trabajo?',
+    '<ul class="options-list">' +
+      rad('p3','nunca',  'Nunca o casi nunca') +
+      rad('p3','una-dos','Una o dos veces por semana') +
+      rad('p3','varias', 'Varias veces por semana') +
+      rad('p3','diario', 'Todos los días') +
+    '</ul>' +
+    '<div class="q-error" id="err-p3">Elige una opción para continuar.</div>'
+  );
+
+  html += qBlock('P4', 'P4',
+    'Cuando usas AI, ¿cómo describirías tu forma de interactuar con ella?',
+    '<ul class="options-list">' +
+      rad('p4','simple', 'Hago preguntas simples y uso el primer resultado') +
+      rad('p4','contexto','Doy contexto y ajusto si el resultado no es lo que esperaba') +
+      rad('p4','itero',  'Itero hasta obtener lo que necesito') +
+      rad('p4','diseño', 'Diseño cómo usarla para tareas complejas — voy más allá del uso básico') +
+    '</ul>' +
+    '<div class="q-error" id="err-p4">Elige una opción para continuar.</div>'
+  );
+
+  // ─── BLOQUE 2 ──────────────────────────
+  html += dimH('02', 'Cómo trabajas con AI');
+
+  html += qBlock('P5', 'P5',
+    'Cuando usas AI, ¿cómo describirías la calidad de lo que le pides — tus instrucciones, preguntas o prompts?',
+    '<ul class="options-list">' +
+      rad('p5','simple', 'Hago preguntas simples y directas') +
+      rad('p5','contexto','Doy contexto y especifico el formato que quiero') +
+      rad('p5','itero',  'Itero — si el primer resultado no es bueno, reformulo') +
+      rad('p5','diseño', 'Diseño secuencias de prompts para tareas complejas') +
+    '</ul>' +
+    '<div class="q-error" id="err-p5">Elige una opción para continuar.</div>'
+  );
+
+  html += qBlock('P6', 'P6',
+    '¿Qué haces con los resultados que te da la AI antes de usarlos?',
+    '<ul class="options-list">' +
+      rad('p6','directo', 'Los uso directamente sin revisión mayor') +
+      rad('p6','reviso',  'Los reviso pero raramente los modifico') +
+      rad('p6','edito',   'Los edito significativamente antes de usarlos') +
+      rad('p6','borrador','Los trato como borrador — el output final es mayormente mío') +
+    '</ul>' +
+    '<div class="q-error" id="err-p6">Elige una opción para continuar.</div>'
+  );
+
+  html += qBlock('P7', 'P7',
+    '¿Con qué frecuencia verificas los resultados de AI cuando los usas en contextos de alto juicio — memos de inversión, análisis de portafolio, comunicaciones con founders o LPs?',
+    '<ul class="options-list">' +
+      rad('p7','siempre',     'Siempre — nunca uso un resultado sin verificarlo en ese tipo de contexto') +
+      rad('p7','generalmente','Generalmente — salvo que sea una tarea de bajo riesgo') +
+      rad('p7','aveces',      'A veces — depende de la urgencia') +
+      rad('p7','raramente',   'Raramente — confío en el resultado directamente') +
+    '</ul>' +
+    '<div class="q-error" id="err-p7">Elige una opción para continuar.</div>'
+  );
+
+  // ─── BLOQUE 3 ──────────────────────────
+  html += dimH('03', 'Normas y contexto');
+
+  html += qBlock('P8', 'P8',
+    'Cuando piensas en AI siendo más presente en tu trabajo en Krealo, ¿cuál es tu primera reacción?',
+    '<ul class="options-list">' +
+      rad('p8','entusiasmo',   'Entusiasmo — veo mucho potencial') +
+      rad('p8','curiosidad',   'Curiosidad — quiero entenderlo mejor antes de formarme una opinión') +
+      rad('p8','incertidumbre','Incertidumbre — no tengo claro qué significa para mi trabajo específico') +
+      rad('p8','reservas',     'Reservas — tengo preocupaciones que no he terminado de resolver') +
+      rad('p8','indiferencia', 'Indiferencia — no creo que cambie mucho lo que hago') +
+    '</ul>' +
+    '<div class="q-error" id="err-p8">Elige una opción para continuar.</div>'
+  );
+
+  html += qBlock('P9', 'P9',
+    '¿Cómo sabes hoy qué puedes y qué no puedes hacer con AI en Krealo — qué datos compartir, qué herramientas usar, qué resultados son aceptables?',
+    '<ul class="options-list">' +
+      rad('p9','claridad',    'Tengo claridad — conozco las políticas y las aplico') +
+      rad('p9','parcial',     'Tengo claridad parcial — sé lo básico pero hay zonas grises') +
+      rad('p9','sin-claridad','No tengo claridad — opero por intuición o por lo que veo que hacen otros') +
+      rad('p9','no-pensado',  'No he pensado en esto todavía') +
+    '</ul>' +
+    '<div class="q-error" id="err-p9">Elige una opción para continuar.</div>'
+  );
+
+  html += qBlock('P10', 'P10',
+    '¿Alguna vez usaste AI en tu trabajo de una manera que no sabías con certeza si estaba aprobada en Krealo?',
+    '<ul class="options-list">' +
+      rad('p10','si-muchas', 'Sí, más de una vez') +
+      rad('p10','si-alguna', 'Sí, en alguna ocasión') +
+      rad('p10','no-consulte','No — cuando he tenido dudas, lo consulté antes') +
+      rad('p10','no-dudas',  'No — no he tenido situaciones de duda') +
+      rad('p10','no-se',     'No lo sé / no lo había pensado en esos términos') +
+    '</ul>' +
+    '<div class="q-error" id="err-p10">Elige una opción para continuar.</div>'
+  );
+
+  html += qBlock('P11', 'P11',
+    '¿Puedes explicar, en tus propias palabras, cómo el uso de AI en tu trabajo se conecta con lo que Krealo quiere lograr como fondo de inversión?',
+    '<ul class="options-list">' +
+      rad('p11','si-claro',  'Sí — tengo esa conexión clara y la puedo articular') +
+      rad('p11','tengo-idea','Tengo una idea pero no la tengo completamente articulada') +
+      rad('p11','no-pensado','No lo he pensado en esos términos todavía') +
+      rad('p11','no-conexion','No veo la conexión con mi trabajo específico') +
+    '</ul>' +
+    '<div class="cond-text-block" id="p11-block">' +
+      '<textarea id="p11-texto" placeholder="Descríbela con tus propias palabras."></textarea>' +
+    '</div>' +
+    '<div class="q-error" id="err-p11">Elige una opción para continuar.</div>' +
+    '<div class="q-error" id="err-p11-texto">Esta respuesta importa — cuéntanos lo que tengas en mente, aunque sea una idea inicial.</div>'
+  );
+
+  // P14 — solo líderes, al final del Bloque 3
+  if (esLider) {
+    html += qBlock('P14', 'P14',
+      '¿Cuándo fue la última vez que compartiste con tu equipo un ejemplo de cómo usaste AI — y te funcionó?',
+      '<div class="leader-badge">Solo líderes</div>' +
+      '<ul class="options-list">' +
+        rad('p14','esta-semana','Esta semana') +
+        rad('p14','ultimas-4', 'En las últimas 4 semanas') +
+        rad('p14','mas-mes',   'Hace más de un mes') +
+        rad('p14','nunca',     'No lo he hecho nunca') +
+      '</ul>' +
+      '<div class="q-error" id="err-p14">Elige una opción para continuar.</div>'
+    );
+  }
+
+  // ─── BLOQUE 4 ──────────────────────────
+  html += dimH('04', 'Cambio real en tu trabajo');
+
+  html += qBlock('P12', 'P12',
+    '¿Hay algo que hayas dejado de hacer, o que hagas diferente, porque ahora tienes AI disponible?',
+    '<ul class="options-list">' +
+      rad('p12','si',     'Sí — ¿qué cambió?') +
+      rad('p12','anticipo','Todavía no, pero lo anticipo') +
+      rad('p12','no',     'No — mi forma de trabajar no ha cambiado') +
+    '</ul>' +
+    '<div class="cond-text-block" id="p12-block">' +
+      '<textarea id="p12-texto" placeholder="Cuéntanos qué cambió concretamente."></textarea>' +
+    '</div>' +
+    '<div class="q-error" id="err-p12">Elige una opción para continuar.</div>' +
+    '<div class="q-error" id="err-p12-texto">Esta respuesta importa — cuéntanos lo que tengas en mente, aunque sea una idea inicial.</div>'
+  );
+
+  html += qBlock('P13', 'P13',
+    '¿Cuál crees que es el principal obstáculo para usar AI de forma más efectiva en tu trabajo en Krealo hoy? Elige uno.',
+    '<ul class="options-list">' +
+      rad('p13','conocimiento','Conocimiento — no sé cómo empezar o cómo usarla bien') +
+      rad('p13','tiempo',      'Tiempo — no hay espacio para aprender o experimentar') +
+      rad('p13','herramientas','Herramientas — no tengo acceso a las plataformas adecuadas') +
+      rad('p13','gobernanza',  'Gobernanza — no está claro qué se puede y qué no') +
+      rad('p13','cultura',     'Cultura — no hay incentivo o ejemplo desde el liderazgo') +
+      rad('p13','casos-uso',   'Casos de uso — no veo cómo aplica a mi trabajo concreto') +
+      radText('p13','otro',    'Otro','p13-otro','Especifica cuál') +
+    '</ul>' +
+    '<div class="q-error" id="err-p13">Elige una opción para continuar.</div>'
+  );
+
+  // P15 — solo líderes, al final del Bloque 4
+  if (esLider) {
+    html += qBlock('P15', 'P15',
+      'Pensando en los procesos más importantes que tu equipo ejecuta con regularidad, ¿cómo los describirías hoy?',
+      '<div class="leader-badge">Solo líderes</div>' +
+      '<ul class="options-list">' +
+        rad('p15','heterogeneo',    'Cada persona los hace de forma diferente — no hay una manera consistente en el área') +
+        rad('p15','base-variaciones','Hay un proceso base, pero con variaciones según la persona') +
+        rad('p15','estandarizados', 'Los procesos están estandarizados — el equipo los aplica de la misma manera') +
+        rad('p15','ai-integrada',   'Los procesos ya incorporan AI como parte del flujo — no solo como herramienta de apoyo disponible') +
+      '</ul>' +
+      '<div class="q-error" id="err-p15">Elige una opción para continuar.</div>'
+    );
+  }
+
+  document.getElementById('form-body').innerHTML = html;
+  attachFormEvents();
+}
+
+// ─── HTML helpers ─────────────────────────
+function dimH(num, titulo) {
+  return '<div class="dim-header">' +
+    '<span class="dim-num">' + num + '</span>' +
+    '<span class="dim-title">' + titulo + '</span>' +
+  '</div>';
+}
+function qBlock(id, num, texto, contenido) {
+  return '<div class="question-block" id="qb-' + id.toLowerCase() + '">' +
+    '<div class="question-num">' + num + '</div>' +
+    '<div class="question-text">' + texto + '</div>' +
+    contenido +
+  '</div>';
+}
+function chk(name, value, label) {
+  return '<li class="option-item"><label class="option-label">' +
+    '<input type="checkbox" name="' + name + '" value="' + value + '">' +
+    '<span>' + label + '</span></label></li>';
+}
+function chkExcl(name, value, label) {
+  return '<li class="option-item"><label class="option-label">' +
+    '<input type="checkbox" name="' + name + '" value="' + value + '" data-excl="1">' +
+    '<span>' + label + '</span></label></li>';
+}
+function chkText(name, value, label, textId, placeholder) {
+  return '<li class="option-item"><label class="option-label">' +
+    '<input type="checkbox" name="' + name + '" value="' + value + '" data-inline="' + textId + '">' +
+    '<span>' + label + '</span></label>' +
+    '<div class="inline-text-wrap" id="' + textId + '">' +
+      '<input type="text" placeholder="' + placeholder + '">' +
+    '</div></li>';
+}
+function rad(name, value, label) {
+  return '<li class="option-item"><label class="option-label">' +
+    '<input type="radio" name="' + name + '" value="' + value + '">' +
+    '<span>' + label + '</span></label></li>';
+}
+function radText(name, value, label, textId, placeholder) {
+  return '<li class="option-item"><label class="option-label">' +
+    '<input type="radio" name="' + name + '" value="' + value + '">' +
+    '<span>' + label + '</span></label>' +
+    '<div class="inline-text-wrap" id="' + textId + '">' +
+      '<input type="text" placeholder="' + placeholder + '">' +
+    '</div></li>';
+}
+
+// ═══════════════════════════════════════════
+//  EVENTOS DEL FORMULARIO
+// ═══════════════════════════════════════════
+function attachFormEvents() {
+  var formBody = document.getElementById('form-body');
+
+  formBody.addEventListener('change', function (e) {
+    var el   = e.target;
+    var name = el.name;
+    if (el.type === 'checkbox') handleCheckbox(el, name);
+    else if (el.type === 'radio') handleRadio(el, name);
+    // Ocultar banner al interactuar — no se actualiza en tiempo real
+    document.getElementById('submit-error-banner').classList.remove('visible');
+  });
+
+  var t11 = document.getElementById('p11-texto');
+  if (t11) t11.addEventListener('input', function () {
+    hideErr('err-p11-texto');
+    document.getElementById('submit-error-banner').classList.remove('visible');
+  });
+  var t12 = document.getElementById('p12-texto');
+  if (t12) t12.addEventListener('input', function () {
+    hideErr('err-p12-texto');
+    document.getElementById('submit-error-banner').classList.remove('visible');
+  });
+}
+
+function handleCheckbox(el, name) {
+  var listId   = (name === 'p1') ? 'p1-list' : 'p2-list';
+  var list     = document.getElementById(listId);
+  if (!list) return;
+  var allBoxes = list.querySelectorAll('input[type="checkbox"]');
+
+  if (el.dataset.excl === '1' && el.checked) {
+    allBoxes.forEach(function (cb) {
+      if (cb !== el) {
+        cb.checked = false;
+        if (cb.dataset.inline) hideInline(cb.dataset.inline);
+      }
+    });
+  } else if (el.checked) {
+    allBoxes.forEach(function (cb) {
+      if (cb.dataset.excl === '1') cb.checked = false;
+    });
+  }
+  if (el.dataset.inline) toggleInline(el.dataset.inline, el.checked);
+  hideErr('err-' + name);
+}
+
+function handleRadio(el, name) {
+  hideErr('err-' + name);
+  if (name === 'p11') {
+    var b = document.getElementById('p11-block');
+    if (b) b.classList.toggle('visible', el.value === 'si-claro' || el.value === 'tengo-idea');
+    hideErr('err-p11-texto');
+  }
+  if (name === 'p12') {
+    var b2 = document.getElementById('p12-block');
+    if (b2) b2.classList.toggle('visible', el.value === 'si');
+    hideErr('err-p12-texto');
+  }
+  if (name === 'p13') {
+    var ow = document.getElementById('p13-otro');
+    if (ow) ow.classList.toggle('visible', el.value === 'otro');
+  }
+}
+
+function toggleInline(id, v) { var e = document.getElementById(id); if (e) e.classList.toggle('visible', v); }
+function hideInline(id)       { var e = document.getElementById(id); if (e) e.classList.remove('visible'); }
+function showErr(id)          { var e = document.getElementById(id); if (e) e.classList.add('visible'); }
+function hideErr(id)          { var e = document.getElementById(id); if (e) e.classList.remove('visible'); }
+
+// ═══════════════════════════════════════════
+//  SUBMIT & VALIDACIÓN
+// ═══════════════════════════════════════════
+document.getElementById('btn-submit').addEventListener('click', function () {
+  var errors = [];
+
+  if (document.querySelectorAll('input[name="p1"]:checked').length === 0) { showErr('err-p1'); errors.push('p1'); }
+  if (document.querySelectorAll('input[name="p2"]:checked').length === 0) { showErr('err-p2'); errors.push('p2'); }
+
+  ['p3','p4','p5','p6','p7','p8','p9','p10','p12','p13'].forEach(function (p) {
+    if (!document.querySelector('input[name="' + p + '"]:checked')) { showErr('err-' + p); errors.push(p); }
+  });
+
+  var p11 = document.querySelector('input[name="p11"]:checked');
+  if (!p11) { showErr('err-p11'); errors.push('p11'); }
+  else if (p11.value === 'si-claro' || p11.value === 'tengo-idea') {
+    var t11 = document.getElementById('p11-texto');
+    if (!t11 || !t11.value.trim()) { showErr('err-p11-texto'); errors.push('p11t'); }
+  }
+
+  var p12 = document.querySelector('input[name="p12"]:checked');
+  if (p12 && p12.value === 'si') {
+    var t12 = document.getElementById('p12-texto');
+    if (!t12 || !t12.value.trim()) { showErr('err-p12-texto'); errors.push('p12t'); }
+  }
+
+  if (esLider) {
+    if (!document.querySelector('input[name="p14"]:checked')) { showErr('err-p14'); errors.push('p14'); }
+    if (!document.querySelector('input[name="p15"]:checked')) { showErr('err-p15'); errors.push('p15'); }
+  }
+
+  if (errors.length > 0) {
+    var mainQ   = ['p1','p2','p3','p4','p5','p6','p7','p8','p9','p10','p11','p12','p13','p14','p15'];
+    var missing = mainQ.filter(function(q) { return errors.indexOf(q) !== -1; }).length;
+    var hasTextErr = errors.indexOf('p11t') !== -1 || errors.indexOf('p12t') !== -1;
+    var banner = document.getElementById('submit-error-banner');
+    var msg = '';
+    if (missing > 0 && hasTextErr) {
+      msg = 'Hay ' + missing + (missing === 1 ? ' pregunta sin responder' : ' preguntas sin responder') + ' y un campo de texto pendiente. Revísalos antes de continuar.';
+    } else if (missing > 0) {
+      msg = 'Hay ' + missing + (missing === 1 ? ' pregunta sin responder' : ' preguntas sin responder') + '. Revísalas antes de continuar.';
+    } else {
+      msg = 'Hay un campo de texto pendiente. Es importante para el análisis — cuéntanos lo que tengas en mente.';
+    }
+    banner.textContent = msg;
+    banner.classList.add('visible');
+    // Scroll a la primera pregunta con error — el banner sticky permanece visible arriba
+    var first = document.querySelector('.q-error.visible');
+    if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
+  // Todo válido — construir payload y enviar a Sheets
+  var payload = buildPayload();
+  document.getElementById('output-text').textContent = buildOutput();
+  document.getElementById('submit-error-banner').classList.remove('visible');
+
+  // POST a Apps Script — fire-and-forget (no bloquea el flujo)
+  if (APPS_SCRIPT_URL && APPS_SCRIPT_URL !== 'PENDIENTE') {
+    try {
+      fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: JSON.stringify(payload)
+      });
+    } catch (fetchErr) {
+      // Silencioso — las respuestas están guardadas localmente en el .txt
+    }
+  }
+
+  showScreen('screen-2');
+  window.scrollTo(0, 0);
+  setTimeout(function () {
+    document.getElementById('loading-bar').classList.add('go');
+  }, 50);
+  setTimeout(function () {
+    showScreen('screen-3');
+    window.scrollTo(0, 0);
+  }, 5300);
+});
+
+// ═══════════════════════════════════════════
+//  PAYLOAD — datos estructurados para Sheets
+// ═══════════════════════════════════════════
+function buildPayload() {
+  function getChkRaw(name) {
+    var cbs = document.querySelectorAll('input[name="' + name + '"]:checked');
+    var vals = [];
+    cbs.forEach(function(cb) { vals.push(cb.value); });
+    return vals.join(', ');
+  }
+  function getRadRaw(name) {
+    var el = document.querySelector('input[name="' + name + '"]:checked');
+    return el ? el.value : '';
+  }
+  return {
+    email:     userData.email,
+    area:      userData.area,
+    nivel:     userData.nivel,
+    p1:        getChkRaw('p1'),
+    p2:        getChkRaw('p2'),
+    p3:        getRadRaw('p3'),
+    p4:        getRadRaw('p4'),
+    p5:        getRadRaw('p5'),
+    p6:        getRadRaw('p6'),
+    p7:        getRadRaw('p7'),
+    p8:        getRadRaw('p8'),
+    p9:        getRadRaw('p9'),
+    p10:       getRadRaw('p10'),
+    p11:       getRadRaw('p11'),
+    p11_texto: (document.getElementById('p11-texto') || {}).value || '',
+    p12:       getRadRaw('p12'),
+    p12_texto: (document.getElementById('p12-texto') || {}).value || '',
+    p13:       getRadRaw('p13'),
+    p13_otro:  (document.querySelector('#p13-otro input[type="text"]') || {}).value || '',
+    p14:       esLider ? getRadRaw('p14') : '',
+    p15:       esLider ? getRadRaw('p15') : ''
+  };
+}
+
+// ═══════════════════════════════════════════
+//  OUTPUT — texto formateado para copiar/descargar
+// ═══════════════════════════════════════════
+function buildOutput() {
+  var now   = new Date();
+  var fecha = pad(now.getDate()) + '/' + pad(now.getMonth()+1) + '/' + now.getFullYear();
+  var L = [];
+  L.push('KREALO AI — Diagnóstico de adopción');
+  L.push(rep('═', 48));
+  L.push('Fecha:  ' + fecha);
+  L.push('Email:  ' + userData.email);
+  L.push('Área:   ' + userData.area);
+  L.push('Nivel:  ' + (esLider ? 'Líder (personas a cargo)' : 'Individual Contributor (IC)'));
+  L.push('');
+  // D1
+  L.push('01 — Uso actual de AI en tu trabajo');
+  L.push(rep('─', 44));
+  L.push('P1 — Herramientas en uso:');
+  getChkVals('p1','p1-otra').forEach(function(v){ L.push('  · ' + v); });
+  L.push('');
+  L.push('P2 — Tipos de tarea:');
+  getChkVals('p2','p2-otra').forEach(function(v){ L.push('  · ' + v); });
+  L.push('');
+  L.push('P3 — Frecuencia de uso:');
+  L.push('  ' + getRadLabel('p3')); L.push('');
+  L.push('P4 — Forma de interactuar con AI:');
+  L.push('  ' + getRadLabel('p4')); L.push('');
+  // D2
+  L.push('02 — Cómo trabajas con AI');
+  L.push(rep('─', 44));
+  L.push('P5 — Calidad de instrucciones / prompts:');
+  L.push('  ' + getRadLabel('p5')); L.push('');
+  L.push('P6 — Manejo de resultados:');
+  L.push('  ' + getRadLabel('p6')); L.push('');
+  L.push('P7 — Verificación en contextos de alto juicio:');
+  L.push('  ' + getRadLabel('p7')); L.push('');
+  // D3
+  L.push('03 — Normas y contexto');
+  L.push(rep('─', 44));
+  L.push('P8 — Reacción / Mindset:');
+  L.push('  ' + getRadLabel('p8')); L.push('');
+  L.push('P9 — Claridad de gobernanza:');
+  L.push('  ' + getRadLabel('p9')); L.push('');
+  L.push('P10 — Comportamiento ante ambigüedad:');
+  L.push('  ' + getRadLabel('p10')); L.push('');
+  L.push('P11 — Conexión estratégica individual:');
+  L.push('  ' + getRadLabel('p11'));
+  var t11v = (document.getElementById('p11-texto')||{}).value||'';
+  if (t11v.trim()) L.push('  Articulación: ' + t11v.trim());
+  L.push('');
+  if (esLider) {
+    L.push('P14 — Modelado de comportamiento [Solo líderes]:');
+    L.push('  ' + getRadLabel('p14')); L.push('');
+  }
+  // D4
+  L.push('04 — Cambio real en tu trabajo');
+  L.push(rep('─', 44));
+  L.push('P12 — ¿Algo cambió en cómo trabajas?:');
+  L.push('  ' + getRadLabel('p12'));
+  var t12v = (document.getElementById('p12-texto')||{}).value||'';
+  if (t12v.trim()) L.push('  Descripción: ' + t12v.trim());
+  L.push('');
+  L.push('P13 — Cuello de botella principal:');
+  var p13l  = getRadLabel('p13');
+  var p13in = document.querySelector('#p13-otro input[type="text"]');
+  if (p13in && p13in.value.trim()) p13l += ': ' + p13in.value.trim();
+  L.push('  ' + p13l); L.push('');
+  if (esLider) {
+    L.push('P15 — Estado de procesos del área [Solo líderes]:');
+    L.push('  ' + getRadLabel('p15')); L.push('');
+  }
+  L.push(rep('═', 48));
+  L.push('Krealo AI · Mayo 2026');
+  L.push('Uso interno · No para circulación externa');
+  return L.join('\n');
+}
+
+function getChkVals(name, otraId) {
+  var cbs  = document.querySelectorAll('input[name="' + name + '"]:checked');
+  var vals = [];
+  cbs.forEach(function (cb) {
+    var lbl = cb.closest('label').querySelector('span').textContent;
+    if (cb.value === 'otra') {
+      var inp = document.querySelector('#' + otraId + ' input[type="text"]');
+      vals.push(lbl + ((inp && inp.value.trim()) ? ': ' + inp.value.trim() : ''));
+    } else { vals.push(lbl); }
+  });
+  return vals.length ? vals : ['—'];
+}
+function getRadLabel(name) {
+  var el = document.querySelector('input[name="' + name + '"]:checked');
+  return el ? el.closest('label').querySelector('span').textContent : '—';
+}
+function pad(n) { return n < 10 ? '0' + n : '' + n; }
+function rep(ch, n) { var s = ''; for (var i = 0; i < n; i++) s += ch; return s; }
+
+// ═══════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════
+var toastTimer = null;
+function showToast(msg) {
+  var t = document.getElementById('action-toast');
+  t.textContent = msg;
+  t.classList.add('visible');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () { t.classList.remove('visible'); }, 3000);
+}
+
+// ═══════════════════════════════════════════
+//  COPIAR
+// ═══════════════════════════════════════════
+document.getElementById('btn-copy').addEventListener('click', function () {
+  var text = document.getElementById('output-text').textContent;
+  var btn  = document.getElementById('btn-copy');
+  function markDone() {
+    btn.textContent = '\u2713 Copiado';
+    btn.classList.add('confirmed');
+    setTimeout(function () { btn.textContent = 'Copiar respuestas'; btn.classList.remove('confirmed'); }, 2500);
+    showToast('Respuestas copiadas. \u00a1Gracias por participar!');
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(markDone).catch(fallbackCopy);
+  } else { fallbackCopy(); }
+  function fallbackCopy() {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;top:-9999px;opacity:0;';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    try { document.execCommand('copy'); markDone(); } catch(e) {}
+    document.body.removeChild(ta);
+  }
+});
+
+// ═══════════════════════════════════════════
+//  DESCARGAR
+// ═══════════════════════════════════════════
+document.getElementById('btn-dl').addEventListener('click', function () {
+  var text  = document.getElementById('output-text').textContent;
+  var btn   = document.getElementById('btn-dl');
+  var now   = new Date();
+  var dstr  = now.getFullYear() + pad(now.getMonth()+1) + pad(now.getDate());
+  var eslug = userData.email.replace(/[@.]/g, '_');
+  var fname = 'Survey_Krealo_AI_' + eslug + '_' + dstr + '.txt';
+  var blob  = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  var url   = URL.createObjectURL(blob);
+  var a     = document.createElement('a');
+  a.href = url; a.download = fname;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  btn.textContent = '\u2713 Descargado';
+  btn.classList.add('confirmed');
+  setTimeout(function () { btn.textContent = 'Descargar como .txt'; btn.classList.remove('confirmed'); }, 2500);
+  showToast('Archivo descargado. \u00a1Gracias por participar!');
+});
+</script>
+</body>
+</html>
